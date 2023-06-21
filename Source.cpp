@@ -1,4 +1,6 @@
-
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest.h>
+#include <sstream>
 #include "player.cpp"
 #include <iostream>
 void TestPrintProgressBar() {
@@ -27,6 +29,51 @@ void TestPrintProgressBar() {
     PrintProgressBar(0.25f);
     std::cout << std::endl;
 }
+
+
+void PrintProgressBar(float progress) {
+    // Реализация функции PrintProgressBar
+    // ...
+
+    // Пример реализации для теста:
+    int filledWidth = static_cast<int>(progress * 10);
+    int emptyWidth = 10 - filledWidth;
+
+    std::stringstream ss;
+    ss << "[";
+    for (int i = 0; i < filledWidth; ++i) {
+        ss << "#";
+    }
+    for (int i = 0; i < emptyWidth; ++i) {
+        ss << " ";
+    }
+    ss << "] " << static_cast<int>(progress * 100) << "%";
+
+    std::cout << ss.str() << std::endl;
+}
+
+TEST_CASE("PrintProgressBar Test") {
+    std::stringstream output;
+
+    // Перенаправляем вывод в output
+    doctest::Context().setStream(&output);
+
+    SUBCASE("Progress 0.5") {
+        PrintProgressBar(0.5f);
+        CHECK_EQ(output.str(), "[#####     ] 50%\n");
+    }
+
+    SUBCASE("Progress 1.0") {
+        PrintProgressBar(1.0f);
+        CHECK_EQ(output.str(), "[##########] 100%\n");
+    }
+
+    SUBCASE("Progress 0.0") {
+        PrintProgressBar(0.0f);
+        CHECK_EQ(output.str(), "[          ] 0%\n");
+    }
+}
+
 void TestFuncs()
 {
     speedsound(1.5);  // Ожидаемый результат: Установленная скорость: 1.5
