@@ -1,9 +1,9 @@
 ﻿#include <iostream> //нужен для вывода строк "cout<<"
 #include "conio.h" //нужен намеренно для "getche()" , а не "cin>>"
-#include "windows.h" //библиотека audiere её требует
+#include <windows.h> //библиотека audiere её требует
 #include "audiere.h" //сама библиотека
 #include <thread>// потоков
-#include <chrono>
+#include <chrono>// для задержки в функции
 #include <atomic>
 #include <string>
 
@@ -22,14 +22,30 @@ atomic<bool> isPaused(false);
 AudioDevicePtr device = OpenDevice();
 OutputStreamPtr sound = OpenSound(device, "song.mp3", false);
 
+void soundplay()
+{
+    sound->play();
+}
+void soundstop()
+{
+    sound->stop();
+}
+void Soundparameter()
+{
+    float pvolume = sound->getVolume();
+    cout << "громкость" << pvolume << "раз";
+}
+void Speedparameter()
+{
+    float pspeed = sound->getPitchShift();
+    cout << "ускорение в" << pspeed << "раз";
+}
 int audiolength()
 // функия получает длину аудио файла методом из библиотеки audiere
 {
     int lengthInSeconds = sound->getLength() / 50000;
-
     return lengthInSeconds;
 }
-
 int devicecheck()
 //Функия обработки ошибок 
 {
@@ -80,12 +96,8 @@ void volumesound(float volume)
         cout << "ВВЕДЕНО ЗНАЧЕНИЕ МЕНЬШЕ МИНИМАЛЬНО ДОПУСТИМОГО. ФАЙЛ БУДЕТ ПРОИГРВАТЬСЯ С МАСКИМАЛЬНОЙ ГРОМКОСТЬЮ" << endl;
         float volume = 0;
     }
-
     sound->setVolume(volume);
 }
-
-
-
 void PrintProgressBar(float progress) 
 // функция отображения шкалы проигрывания, выводит ее в консоль. Шкала заполняется по мере проигрывания трека 
 {
@@ -123,7 +135,7 @@ void PlaySound(AudioDevicePtr device, OutputStreamPtr sound)
 //функция проигрывания трека. Играет пока с клавиатуры не будет введен символ "p". Идет отдельным потоком
 {
     isPaused = false;
-    sound->play();
+    soundplay();
 
     //создвем отдельный поток чтобы можно было остановить во время проигрывания
     thread progressBarThread(UpdateProgressBar, sound);
@@ -138,15 +150,14 @@ void PlaySound(AudioDevicePtr device, OutputStreamPtr sound)
             isPaused = !isPaused;
             if (isPaused) 
             {
-                sound->stop();
+                soundstop();
             }
             else 
             {
-                sound->play();
+                soundplay();
             }
         }
     }
-
     // Прекращаем считавать прогресс после окончания проигрывания трека. Закрываем поток
     isPlaying = false;
     progressBarThread.join();
@@ -155,16 +166,19 @@ void PlaySound(AudioDevicePtr device, OutputStreamPtr sound)
 int main() 
 {
     string output;
+    
+    // Установка кодовой страницы консоли на UTF-8
+    SetConsoleOutputCP(CP_UTF8);
+
     //Обрабатываем возможные ошибки
     soundcheck();
     devicecheck();
 
     // Устанавливаем русскую локаль
-    setlocale(0, "Russian"); 
-    
+    setlocale(0, "Russian");
+
     cout << "Хотели бы вы изменить настройки проигрывания?(y/n): ";
     cin >> answer;
-
     if (answer == "y")
     {
         //Запрашиваем у пользователя скоростью с которой он хочет проиграть трек(ускорение/замедление)
@@ -186,12 +200,14 @@ int main()
         string output = "Трек будет проигрываться со стандартными настройками";
         cout << output << endl;
     }
+    Soundparameter();
+    Speedparameter();
     // Выводим название трека
     cout << "song.mp3" << endl;
     
     //Выводим длину аудиофайла при помощи функции audiolength()
     cout << "Длительность аудиофайла: " << audiolength() << " секунд" << endl;
-    
+
     //Проигрываем наш звук
     PlaySound(device, sound);
 
